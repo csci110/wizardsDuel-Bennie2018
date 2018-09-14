@@ -22,7 +22,7 @@ class PlayerWizard extends Sprite {
         this.defineAnimation("right",3,5);
         this.speedWhenWalking = 100;
     }
-    handleDownArrowKey() {
+   handleDownArrowKey() {
         //this.playAnimation("down",true);
 // made it where the animation plays without player input 100% of the time
         this.playAnimation("down");
@@ -43,9 +43,11 @@ class PlayerWizard extends Sprite {
         spell.setImage("marcusSpellSheet.png");
         spell.angle = 0;
         this.playAnimation("right");
+		
     }
+        
     handleGameLoop() {
-        this.y = Math.max(0, this.y);
+        this.y = Math.max(5, this.y);
         this.y = Math.min(552, this.y);
         // Keep Marcus in the display area 
     }
@@ -68,14 +70,23 @@ class Spell extends Sprite {
          this.height = 48;
          this.defineAnimation("magic",0,7);
          this.playAnimation("magic",true);
-     }
+        // Compare images so Stranger's spells don't destroy each other.
+    if (this.getImage() !== Fireball.getImage()) {
+      // Adjust mostly blank spell image to vertical center.
+      let verticalOffset = Math.abs(this.y - Fireball.y);
+      if (verticalOffset < this.height / 2) {
+          game.removeSprite(this);
+          new Fireball(Fireball);
+      }
+  }
+
+  return false;
+ }
      handleBoundaryContact() {
       // Delete spell when it leaves display area
       game.removeSprite(this);
     }
 }
-
-
 //--------------------------------------------------------------------------------------------------
 
 class NonPlayerWizard extends Sprite {
@@ -105,9 +116,20 @@ class NonPlayerWizard extends Sprite {
             this.y = game.displayHeight - this.height;
         this.angle = 90;
         this.playAnimation("up",true);
-        } 
+		}
+		if ( !game.isActiveSprite(marcus)) {
+			game.end("Marcus is defeated by the mysterious\nstranger in the dark cloak!\n\nBetter luck next time.")
+        
+		} 
     }
-    
+    handleAnimationEnd() {
+        game.removeSprite(this);
+        if (!game.isActiveSprite(stranger)) {
+            game.end("Congratulations!\n\nMarcus has defeated the mysterious"
+            + "\nstranger in the dark cloak!");
+        }
+
+}
    /* if (condition1) {
     this.playAnimation("up");
     }
@@ -116,5 +138,17 @@ class NonPlayerWizard extends Sprite {
     } */
 }
 
-let strnager = new NonPlayerWizard();
+let stranger = new NonPlayerWizard();
 
+
+class Fireball extends Sprite {
+    constructor(deadSprite) {
+        super();
+        this.x = deadSprite.x;
+        this.y = deadSprite.y;
+		this.setImage("fireball.png");
+		this.name = "A ball of fire";
+		game.removeSprite(deadSprite);
+		this.defineAnimation("explode",0,16);
+    }
+}
